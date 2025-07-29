@@ -1,35 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Suspense } from 'react';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+// QueryClient 인스턴스 생성
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5분
+      retry: 3,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
+// 에러 폴백 컴포넌트
+function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className='error-boundary'>
+      <h2>⚠️ Something went wrong:</h2>
+      <pre style={{ color: 'red', whiteSpace: 'pre-wrap' }}>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>🔄 Try again</button>
+    </div>
+  );
 }
 
-export default App
+// 로딩 폴백 컴포넌트
+function LoadingFallback() {
+  return (
+    <div className='loading-fallback'>
+      <div>🔄 Loading...</div>
+    </div>
+  );
+}
+
+// 메인 앱 컨텐츠
+function AppContent() {
+  return (
+    <div>
+      <h1>🚀 API Fetching with TanStack Query</h1>
+      <p>✅ QueryClientProvider configured</p>
+      <p>✅ ErrorBoundary configured</p>
+      <p>✅ Suspense configured</p>
+      <p>Ready for API integration! 🎉</p>
+    </div>
+  );
+}
+
+// 메인 App 컴포넌트 - Tanstack Query 아키텍처 적용
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <Suspense fallback={<LoadingFallback />}>
+          <AppContent />
+        </Suspense>
+      </ErrorBoundary>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
